@@ -1,0 +1,30 @@
+# Nanopore Pipeline for Bulk Samples
+
+# Merge your reads. Reads should not be in multi fast5 format (i.e. 4000 reads per fast5)
+
+#Run guppy base caller
+guppy_basecaller --input_path ~/ON_data --save_path ~/ON_fastq --flowcell FLO-MIN106 --kit SQK-LSK109
+
+# Activate python3 environment for NanoFilt
+python3 -m venv /home/mmiller/panama_ON/ON_fastq/fastq_combo/
+source /home/mmiller/panama_ON/ON_fastq/fastq_combo/bin/activate
+
+# Run NanoFilt to quality filter, size filter, and remove primers. NanoFilt requires a python3 environment, so . The following assumes that you have python 3 already installled
+gunzip -c 1554_all.fastq.gz | NanoFilt -q 12 -l 500 --maxlength 1000 | gzip > initial_trim1554.fastq.gz
+Nanoplot -t 6 --fastq initial_trim1554.fastq.gz
+gunzip -c initial_trim1554.fastq.gz | NanoFilt  -l 750 --maxlength 850 | gzip > second_trim1554.fastq.gz
+Nanoplot -t 6 --fastq second_trim1554.fastq.gz
+
+# Demultiplex reads.  (Previously, we used Porechop). We now use qcat (should trim and sort):
+cat fastq_pass/*.fastq | qcat -b Wiley_out --trim -k NBD104/NBD114
+
+# There are steps missing here. For example, how do we get from gzipped fastqs to unzipped fastqs
+# Need to trim off primers, this could be a usearch step.
+
+# Use USEARCH to cluster a single barcode read. Setting a low id  is critical
+./usearch.xxx... -cluster_fast barcode1.fastq -id 0.90  -consout barcode1consensus.fasta -clusters barcode1/c_
+
+# Need to sit down with Caio and figure out what we did.
+
+# Use minimap2.  First take the first read from the cluster and Blast it. Download the top  hit as fasta, renaming it to "accession.fasta". Move it into the cluster folder and:
+minimap2 -ax map-ont MK300247.fasta barcode01_cluster_2 > cluster_2.sam
