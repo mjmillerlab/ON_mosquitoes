@@ -22,9 +22,10 @@ cat fastq_pass/*.fastq | qcat -b Wiley_out --trim -k NBD104/NBD114
 # Need to trim off primers, this could be a usearch step.
 
 # Use USEARCH to cluster a single barcode read. Setting a low id  is critical
-./usearch.xxx... -cluster_fast barcode1.fastq -id 0.90  -consout barcode1consensus.fasta -clusters barcode1/c_
+# We want to test the results with ID=0.70, ID=0.80, and ID=0.90 as a minimum
+# This code also creates a consensus for each cluster using a USEARCH algorithim
+./usearch.xxx... -cluster_fast barcode1.fastq -id 0.80  -consout barcode1consensus.fasta -clusters barcode1/c_
+# In practice, I don't like the USEARCH consensus. It doesn't deal well with ON error, so we have move away from This
 
-# Need to sit down with Caio and figure out what we did.
-
-# Use minimap2.  First take the first read from the cluster and Blast it. Download the top  hit as fasta, renaming it to "accession.fasta". Move it into the cluster folder and:
+# I don't like the USEARCH algorithim for building a consensus. So we re-build a consensus with minimap. This also gets rid of much of the ON error.
 minimap2 -ax map-ont MK300247.fasta barcode01_cluster_2 > cluster_2.sam
